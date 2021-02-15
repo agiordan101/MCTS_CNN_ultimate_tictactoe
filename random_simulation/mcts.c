@@ -14,7 +14,7 @@
 #include <math.h>
 #include <time.h>
 
-#define N_ITER_MCTS 30000
+#define N_ITER_MCTS 1000
 #define SEC_PER_TURN 0.090
 #define SEC_FIRST_TURN 0.990
 #define EMPTY_CASE 95
@@ -547,13 +547,19 @@ void        parsing(t_node **tree)   //Faire le parsing sur les games_save
     char    ret;
     print_game();
 
-    fprintf(stderr, "scanf my choice - >\n");
-    scanf("%d%d", (int *)&opponent_row, (int *)&opponent_col);
-    while (((ret = get_next_grid(mcts_row, mcts_col)) != -1 && ret != (int)(opponent_row / 3) * 3 + (opponent_col / 3)) || game[opponent_row][opponent_col] != EMPTY_CASE)
+    if (!tree)
+        opponent_col = -1;
+    else
     {
-        fprintf(stderr, "MCTS grid=%d\n", ret);
-        fprintf(stderr, "scanf my choice - >");
+        fprintf(stderr, "scanf my choice - >\n");
         scanf("%d%d", (int *)&opponent_row, (int *)&opponent_col);
+
+        while (((ret = get_next_grid(mcts_row, mcts_col)) != -1 && ret != (int)(opponent_row / 3) * 3 + (opponent_col / 3)) || game[opponent_row][opponent_col] != EMPTY_CASE)
+        {
+            fprintf(stderr, "MCTS grid=%d\n", ret);
+            fprintf(stderr, "scanf my choice - >");
+            scanf("%d%d", (int *)&opponent_row, (int *)&opponent_col);
+        }
     }
 
     if (opponent_col != -1)
