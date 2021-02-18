@@ -396,11 +396,16 @@ def MCTS(last_move, sign, depth=0):
 		return 0
 
 
-def mcts_get_qualities():
+def mcts_get_qualities(moves):
 
 	qualities = np.zeros((9, 9))
 
+	for move in moves:
+		y, x = move[1]
+		qualities[y, x] = Qmcts[move]
+
 	print(qualities)
+	return qualities
 
 @timer
 def print_best_move(last_move, sign):
@@ -426,14 +431,11 @@ def print_best_move(last_move, sign):
 		print(f"{best_move[0]} {best_move[1]}")
 		print(f"Apply my move -> {best_move}", file=sys.stderr, flush=True)
 
+		states.append(gameT)
+		qualities.append(mcts_get_qualities(moves))
+
 		apply_move(game, mini_game, best_move, sign)
 		reset_state()
-		console_tests()
-
-		states.append(gameT)
-		qualities.append(mcts_get_qualities())
-
-		exit(0)
 
 		return best_move
 
@@ -449,21 +451,6 @@ def reset_state():
 	state = copy.deepcopy(game)
 	global mini_state
 	mini_state = copy.deepcopy(mini_game)
-
-def console_tests():
-
-	print_board(game, mini_game) # For console tests
-	
-	winner = is_win()
-	if winner or all([all([mini_game[tmpy][tmpx] != ' ' for tmpx in range(3)]) for tmpy in range(3)]):
-		if winner:
-			print(f"WINNER IS {winner}")
-		else:
-			print(f"- DRAW -")
-		# print(f"Percentage escape get_moves_id() -> {100 * stat_1 / (stat_1 + stat_2)} %")
-		# print(f"Percentage save get_moves_id() -> {100 * stat_3 / (stat_2)} %")
-		# print(f"Values -> {stat_1}\t{stat_2}\t{stat_3}")
-		exit()
 
 def parsing(sign='X'):
 
