@@ -644,7 +644,7 @@ int		main()
             tree->score++;
             tree->visited++;
         }
-        //fprintf(stderr, "Max iter MCTS %d\n", i);
+        fprintf(stderr, "Nbr iter MCTS %d\n", i);
         
         memcpy(&game, &game_save, sizeof(game));
         memcpy(&real_game, &real_game_save, sizeof(real_game_save));
