@@ -6,6 +6,8 @@ import copy
 from timer import timer
 import numpy as np
 
+from CNN_connector import *
+
 # To debug: print("Debug messages...", file=sys.stderr, flush=True)
 
 """
@@ -31,6 +33,7 @@ c = math.sqrt(2)
 game = [[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']]
 mini_game = [[' ', ' ', ' '], [' ', ' ', ' '], [' ', ' ', ' ']]
 
+signs = []
 states = []
 qualities = []
 
@@ -395,8 +398,8 @@ def MCTS(last_move, sign, depth=0):
 		# No move left -> Draw
 		return 0
 
-
-def mcts_get_qualities(moves):
+@timer
+def mcts_get_qualities(moves): # Tous les move possible pas ue ceux de ce tour là
 
 	qualities = np.zeros((9, 9))
 
@@ -416,6 +419,7 @@ def print_best_move(last_move, sign):
 	gameT = tuple([tuple(row) for row in game])
 
 	# print(f"fetch moves id to print best choice {last_move}\n{gameT}", file=sys.stderr, flush=True)
+	reset_state()
 	moves, next_grid = fetch_moves_id((gameT, last_move))
 
 	# print(f"Last move {last_move}", file=sys.stderr, flush=True)
@@ -429,9 +433,10 @@ def print_best_move(last_move, sign):
 
 	if best_move:
 		print(f"{best_move[0]} {best_move[1]}")
-		print(f"Apply my move -> {best_move}", file=sys.stderr, flush=True)
+		print(f"'{sign}' apply {best_move}", file=sys.stderr, flush=True)
 
-		states.append(gameT)
+		signs.append(sign)
+		states.append(convert_game_into_nparray(gameT, sign))
 		qualities.append(mcts_get_qualities(moves))
 
 		apply_move(game, mini_game, best_move, sign)
@@ -467,7 +472,17 @@ def parsing(sign='X'):
 	if last_move[0] != -1:
 		apply_move(game, mini_game, last_move, sign)
 		reset_state()
-		console_tests()
+
+		winner = is_win()
+		if winner or all([all([mini_game[tmpy][tmpx] != ' ' for tmpx in range(3)]) for tmpy in range(3)]):
+			if winner:
+				print(f"WINNER IS {winner}")
+			else:
+				print(f"- DRAW -")
+			# print(f"Percentage escape get_moves_id() -> {100 * stat_1 / (stat_1 + stat_2)} %")
+			# print(f"Percentage save get_moves_id() -> {100 * stat_3 / (stat_2)} %")
+			# print(f"Values -> {stat_1}\t{stat_2}\t{stat_3}")
+			exit(0)
 
 	# Codingame parsing
 	#Useless (Save valid action in Sa ?)
@@ -481,3 +496,33 @@ def parsing(sign='X'):
 	# print(f"begin_time -> {begin_time}", file=sys.stderr, flush=True)
 
 	return last_move
+
+def init_mcts():
+
+	print("-- INIT MCTS --")
+	global Ns
+	global Nsa
+	global Pmcts
+	global Qmcts
+	global Sa
+	Ns = {}
+	Nsa = {}
+	Pmcts = {}
+	Qmcts = {}
+	Sa = {}
+
+	global signs
+	global states
+	global qualities
+	signs = []
+	states = []
+	qualities = []
+
+	global game
+	global mini_game
+	game = [[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']]
+	mini_game = [[' ', ' ', ' '], [' ', ' ', ' '], [' ', ' ', ' ']]
+	reset_state()
+
+	print_board(game, mini_game)
+	
