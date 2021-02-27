@@ -5,6 +5,11 @@ for y in range(9):
 	for x in range(9):
 		all_yxs.append((y, x))
 
+def CNN_prediction(stateT):
+
+	# print("Predict ...")
+	return None, None
+
 def fit(inputs, targets):
 	print("Fit ...")
 
@@ -17,4 +22,7 @@ def convert_game_into_nparray(gameT, sign):
 		if gameT[y][x] != ' ':
 			game_np[y, x] = 1 if gameT[y][x] == sign else -1
 
+	# print(f"gameT: {gameT}")
+	# print(f"sign: {sign}")
+	# print(f"game_np: {game_np}")
 	return game_np

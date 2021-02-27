@@ -61,19 +61,26 @@ def play_game():
 
 
 
-for k in range(1):
+for k in range(2):
 
     init_mcts()
     cross_win = play_game()
 
     # First player = X but first states/qualities save is O
-    win = [-cross_win if i % 2 == 0 else cross_win for i, state in enumerate(states)]
+    win = [-cross_win if i % 2 == 0 else cross_win for i, state in enumerate(mcts.states)]
 
     print(mcts.states)
     print(mcts.qualities)
     print(mcts.signs)
     print(win)
-    print(cross_win)
+    print(f"cross_win: {cross_win}")
+
+    with open(f"datasets/data_{k}", 'a') as f:
+        f.write(str(mcts.states))
+        f.write('\n')
+        f.write(str(mcts.qualities))
+        f.write('\n')
+        f.write(str(win))
+        f.write('\n')
 
     fit(mcts.states, [mcts.qualities, win])
-

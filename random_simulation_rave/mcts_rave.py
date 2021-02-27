@@ -93,7 +93,7 @@ def get_moves_id(stateT, last_move, mcts=False):
         next_grid = (y_next_grid, x_next_grid)
 
         # Check if case is not finish
-        if mini_state[int(y_next_grid / 3)][int(x_next_grid / 3)] == ' ':
+        if mini_state[y_next_grid // 3][x_next_grid // 3] == ' ':
 
             # Get coord of all case in next grid
             yxs = [(y_next_grid, x_next_grid), (y_next_grid, x_next_grid + 1), (y_next_grid, x_next_grid + 2),
@@ -342,6 +342,7 @@ def simulation(last_move, sign):
 @timer
 def MCTS(last_move, sign, depth=0):
 
+
     #if depth > 4:
     #    print(f"MCTS {depth} / last_move {last_move}", file=sys.stderr, flush=True)
     # print(f"MCTS {depth} / last_move {last_move}", file=sys.stderr, flush=True)
@@ -351,6 +352,10 @@ def MCTS(last_move, sign, depth=0):
 
     moves, next_grid = fetch_moves_id((stateT, last_move), mcts=True)
     # print(f"Nbr moves {len(moves)}", file=sys.stderr, flush=True)
+    
+    # if not depth:
+    #     print(f"MCTS {depth} / last_move {last_move}", file=sys.stderr, flush=True)
+    #     print(f"Nbr moves {len(moves)}", file=sys.stderr, flush=True)
 
     if moves:
         # print(f"GO DEEPER", file=sys.stderr, flush=True)
@@ -454,6 +459,8 @@ def print_best_move(last_move, sign):
 
     gameT = tuple([tuple(row) for row in game])
 
+    print_board(gameT, mini_game)
+
     # print(f"fetch moves id to print best choice {last_move}\n{gameT}", file=sys.stderr, flush=True)
     moves, next_grid = fetch_moves_id((gameT, last_move))
 
@@ -471,10 +478,35 @@ def print_best_move(last_move, sign):
         print(f"Apply my move -> {best_move}", file=sys.stderr, flush=True)
 
         apply_move(game, mini_game, best_move, sign)
-        reset_state()
-        console_tests()
+        # reset_state()
+        # console_tests()
         return best_move
 
     else:
-        print(f"ERROR NO BEST VALUE")
+        print(f"[ERROR MCTS RAVE] NO BEST VALUE")
+        print(f"Nbr moves {len(moves)}", file=sys.stderr, flush=True)
+        print(f"next_grid: {next_grid}")
+        print(f"last_move: {last_move}")
         exit(1)
+
+def init_mcts():
+
+	print("-- INIT MCTS --")
+	global Ns
+	global Nsa
+	global Pmcts
+	global Qmcts
+	global Sa
+	Ns = {}
+	Nsa = {}
+	Pmcts = {}
+	Qmcts = {}
+	Sa = {}
+
+	global game
+	global mini_game
+	game = [[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']]
+	mini_game = [[' ', ' ', ' '], [' ', ' ', ' '], [' ', ' ', ' ']]
+	reset_state()
+
+	print_board(game, mini_game)

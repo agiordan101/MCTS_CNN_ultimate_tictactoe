@@ -282,7 +282,7 @@ def is_win():
 
 # --- SELECTION ---
 @timer
-def select_best_move_id(moves, next_grid, last_move, sign, depth):
+def select_best_move_id(moves, policy, next_grid, last_move, sign, depth):
 
 	# print(f"SELECTION nbr moves {len(moves)}", file=sys.stderr, flush=True)
 	best_move = None
@@ -292,9 +292,11 @@ def select_best_move_id(moves, next_grid, last_move, sign, depth):
 	for Nsaid in moves:
 
 		stateT = Nsaid[0]
+		coords = Nsaid[1]
 		
 		# Compute UCB value of this state/move pair
 		ucb = Qmcts[Nsaid] + c * math.sqrt(Ns[stateT]) / (1 + Nsa[Nsaid])
+		# ucb = Qmcts[Nsaid] + c * policy[coords[0]][coords[1]] * math.sqrt(Ns[stateT]) / (1 + Nsa[Nsaid])
 
 		# Save the best
 		if ucb > best_UCB:
@@ -361,20 +363,21 @@ def MCTS(last_move, sign, depth=0):
 
 	if moves:
 		# print(f"GO DEEPER", file=sys.stderr, flush=True)
+		policy, win = CNN_prediction(convert_game_into_nparray(stateT, sign))
 
 		# Node already exist ?
 		if stateT in Ns:
 
 			# print(f"if True", file=sys.stderr, flush=True)
 			# - SELECTION
-			best_move_id = select_best_move_id(moves, next_grid, last_move, sign, depth)
+			best_move_id = select_best_move_id(moves, policy, next_grid, last_move, sign, depth)
 			move = best_move_id[1]
 
 			apply_move(state, mini_state, move, sign)
 
 			points = 1 if is_win() else MCTS(move, ('X' if sign == 'O' else 'O'), depth + 1)
 			# print(f"BACKPROPAGATION depth {depth} / points {points}", file=sys.stderr, flush=True)
-			
+
 			# - BACKPROPAGATION
 			Ns[stateT] += 1
 			Nsa[best_move_id] += 1
@@ -393,6 +396,7 @@ def MCTS(last_move, sign, depth=0):
 
 			# - SIMULATION / CNN
 			return -simulation(last_move, sign)
+			# return -win
 
 	else:
 		# No move left -> Draw
@@ -422,7 +426,7 @@ def print_best_move(last_move, sign):
 	reset_state()
 	moves, next_grid = fetch_moves_id((gameT, last_move))
 
-	# print(f"Last move {last_move}", file=sys.stderr, flush=True)
+	print(f"Nbr moves {len(moves)}", file=sys.stderr, flush=True)
 	for Nsaid in moves:
 
 		print(f"Possible move -> {Nsaid[1]}: {Qmcts[Nsaid]}\t= {Pmcts[Nsaid]}\t/ {Nsa[Nsaid]}", file=sys.stderr, flush=True)
@@ -439,13 +443,15 @@ def print_best_move(last_move, sign):
 		states.append(convert_game_into_nparray(gameT, sign))
 		qualities.append(mcts_get_qualities(moves))
 
+		# print(f"last npstate: {states[-1]}")
+
 		apply_move(game, mini_game, best_move, sign)
-		reset_state()
+		# reset_state()
 
 		return best_move
 
 	else:
-		print(f"ERROR NO BEST VALUE")
+		print(f"[ERROR MCTS RAVE CNN] NO BEST VALUE")
 		exit(1)
 
 
@@ -525,4 +531,3 @@ def init_mcts():
 	reset_state()
 
 	print_board(game, mini_game)
-	
