@@ -2,7 +2,8 @@ import mcts_rave_CNN as mcts
 from mcts_rave_CNN import *
 from CNN_connector import *
 
-mcts_iter = 100
+mcts_iter = 500
+n_game = 10
 
 # ----- MAIN -----
 
@@ -60,14 +61,15 @@ def play_game():
         # turn_time = 0.095
 
 
+model = RLModel(name='first_test')
 
-for k in range(2):
+for k in range(n_game):
 
     init_mcts()
     cross_win = play_game()
 
     # First player = X but first states/qualities save is O
-    win = [-cross_win if i % 2 == 0 else cross_win for i, state in enumerate(mcts.states)]
+    win = [-cross_win if i % 2 == 0 else cross_win for i in range(len(mcts.states))]
 
     print(mcts.states)
     print(mcts.qualities)
@@ -75,12 +77,6 @@ for k in range(2):
     print(win)
     print(f"cross_win: {cross_win}")
 
-    with open(f"datasets/data_{k}", 'a') as f:
-        f.write(str(mcts.states))
-        f.write('\n')
-        f.write(str(mcts.qualities))
-        f.write('\n')
-        f.write(str(win))
-        f.write('\n')
+    model.fit(mcts.states, [mcts.qualities, win])
 
-    fit(mcts.states, [mcts.qualities, win])
+model.model.save(model.name)

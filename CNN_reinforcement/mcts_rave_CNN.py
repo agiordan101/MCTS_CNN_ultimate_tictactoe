@@ -363,7 +363,8 @@ def MCTS(last_move, sign, depth=0):
 
 	if moves:
 		# print(f"GO DEEPER", file=sys.stderr, flush=True)
-		policy, win = CNN_prediction(convert_game_into_nparray(stateT, sign))
+		policy, win = model.predict(convert_game_into_nparray(stateT, sign))
+		policy = policy.reshape(9, 9)
 
 		# Node already exist ?
 		if stateT in Ns:
@@ -405,11 +406,11 @@ def MCTS(last_move, sign, depth=0):
 @timer
 def mcts_get_qualities(moves): # Tous les move possible pas ue ceux de ce tour là
 
-	qualities = np.zeros((9, 9))
+	qualities = np.zeros((9, 9, 1))
 
 	for move in moves:
 		y, x = move[1]
-		qualities[y, x] = Qmcts[move]
+		qualities[y, x, 0] = Qmcts[move]
 
 	print(qualities)
 	return qualities
