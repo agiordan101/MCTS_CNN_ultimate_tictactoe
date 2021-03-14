@@ -17,16 +17,19 @@ def convert_game_into_nparray(gameT, sign):
 	# print(f"gameT: {gameT}")
 	# print(f"sign: {sign}")
 	# print(f"game_np: {game_np}")
-	return game_np
+	# print(game_np.shape)
+	# quit()
+	return game_np[:, :, np.newaxis]
 
 
 class RLModel:
 
-    def __init__(self, name=None):
-		if name:
-			self.model = tf.keras.models.load_model(name)
-		else:
-        	self.model = self.get_model()
+	def __init__(self, name=None):
+		self.name = name or 'model'
+		# if name:
+		# 	self.model = tf.keras.models.load_model(name)
+		# else:
+		self.model = self.get_model()
 
 	def get_model(self):
 		i = tf.keras.layers.Input(shape=(9, 9, 1))
@@ -34,27 +37,27 @@ class RLModel:
 			filters=16,
 			kernel_size=(3, 3),
 			strides=(3, 3),
-			activation='relu')(i)
+			activation='linear')(i)
 		flatten = tf.keras.layers.Flatten()(conv)
 		dense1 = tf.keras.layers.Dense(512, activation='relu')(flatten)
 		dense2 = tf.keras.layers.Dense(256, activation='relu')(dense1)
 
-		policy = tf.keras.layers.Dense(81, activation='softmax')(dense2)
-		value = tf.keras.layers.Dense(1)(dense2)
+		policy = tf.keras.layers.Dense(81, activation='tanh', name='p')(dense2)
+		value = tf.keras.layers.Dense(1, activation='tanh', name='v')(dense2)
 
 		# conv = la
 		model = tf.keras.Model(inputs=i, outputs=[policy, value])
 		model.summary()
 		model.compile(
-			loss='CategoricalCrossentropy',
+			loss='MSE',
 			optimizer='Adam',
-			metrics='Accuracy'
+			metrics=['accuracy']
 		)
 		model.summary()
 		return model
 
-    def fit(self, features, targets, epochs=20):
-        return self.model.fit(features, targets, epochs=epochs)
-    
-    def predict(self, features):
-        return self.model.predict(features)
+	def fit(self, features, targets, epochs=200):
+		return self.model.fit(features, targets, epochs=epochs)
+	
+	def predict(self, features):
+		return self.model.predict(features)

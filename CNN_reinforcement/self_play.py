@@ -1,14 +1,16 @@
-import mcts_rave_CNN as mcts
-from mcts_rave_CNN import *
 from CNN_connector import *
 
-mcts_iter = 500
-n_game = 10
+import mcts_rave_CNN as mcts
+from mcts_rave_CNN import *
+import matplotlib.pyplot as plt
+
+mcts_iter = 100
+n_game = 1
 
 # ----- MAIN -----
 
 @timer
-def play_game():
+def play_game(model):
 
     # Optimization for turn 1
     sign = 'X'
@@ -20,7 +22,7 @@ def play_game():
     i = 0
     for k in range(mcts_iter):
         reset_state()
-        MCTS(last_move, sign=sign)
+        MCTS(last_move, sign=sign, model=model)
         i += 1
     print(f"MCTS iter {i}", file=sys.stderr, flush=True)
 
@@ -36,7 +38,7 @@ def play_game():
             reset_state()
 
             # print(f"MONTE CARLO BEGIN {i}", file=sys.stderr, flush=True)
-            MCTS(last_move, sign=sign)
+            MCTS(last_move, sign=sign, model=model)
             # print(f"MONTE CARLO END {i}", file=sys.stderr, flush=True)
             i += 1
 
@@ -47,7 +49,7 @@ def play_game():
         print_board(mcts.game, mcts.mini_game) # For console tests
         
         winner = is_win()
-        if winner or all([all([mini_game[tmpy][tmpx] != ' ' for tmpx in range(3)]) for tmpy in range(3)]):
+        if winner or all([all([mcts.mini_game[tmpy][tmpx] != ' ' for tmpx in range(3)]) for tmpy in range(3)]):
             if winner:
                 print(f"WINNER IS {winner}")
             else:
@@ -66,17 +68,38 @@ model = RLModel(name='first_test')
 for k in range(n_game):
 
     init_mcts()
-    cross_win = play_game()
+    cross_win = play_game(model)
 
     # First player = X but first states/qualities save is O
     win = [-cross_win if i % 2 == 0 else cross_win for i in range(len(mcts.states))]
 
-    print(mcts.states)
-    print(mcts.qualities)
+    print(np.array(mcts.states).shape)
+    print(np.array(mcts.qualities).shape)
     print(mcts.signs)
-    print(win)
+    print(np.array(win).shape)
     print(f"cross_win: {cross_win}")
 
-    model.fit(mcts.states, [mcts.qualities, win])
+    # win = np.array(win)
+
+    history = model.fit(np.array(mcts.states), [np.array(mcts.qualities), np.array(win)])
+    # print([k for k, _ in history.history.items()])
+    # loss_curve = history.history["loss"]
+    # pacc_curve = history.history["p_accuracy"]
+    # vacc_curve = history.history["v_accuracy"]
+    # plt.plot(loss_curve, label="Train")
+    # plt.legend(loc='upper left')
+    # plt.title("Loss")
+    # plt.show()
+    
+    # plt.plot(pacc_curve)
+    # plt.plot(vacc_curve)
+    # plt.ylabel('accuracy')
+    # plt.xlabel('epoch')
+    # plt.legend(['policy', 'value'], loc='upper left')
+
+    # plt.show()
+    # loss, acc = model.evaluate(self.features, self.targets)
+    # print("Test Loss", loss)
+    # print("Test Accuracy", acc)
 
 model.model.save(model.name)

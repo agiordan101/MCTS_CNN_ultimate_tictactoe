@@ -19,10 +19,11 @@ Verif is_win avec les diagonales de 2
 
 """
 
-Ns = {}     # Number of time a state has been visited
-Nsa = {}    # Number of time a state / action pair has been visited
-Pmcts = {}  # Number of points after taking a state / action pair
-Qmcts = {}  # Quality of a state / action pair
+Ns = {}      # Number of time a state has been visited
+Nsa = {}     # Number of time a state / action pair has been visited
+Pmcts = {}   # Number of points after taking a state / action pair
+Qmcts = {}   # Quality of a state / action pair
+PCache = {}  # Prediction of CNN cached between every fit phase
 
 Sa = {}     # Moves save -> key: (stateT, last_move), value: moves
 
@@ -349,8 +350,9 @@ def simulation(last_move, sign):
 
 # --- Monte Carlo Tree Search (Rave optimisation) ---
 @timer
-def MCTS(last_move, sign, depth=0):
+def MCTS(last_move, sign, model, depth=0):
 
+	# print("model", model)
 	#if depth > 4:
 	#    print(f"MCTS {depth} / last_move {last_move}", file=sys.stderr, flush=True)
 	# print(f"MCTS {depth} / last_move {last_move}", file=sys.stderr, flush=True)
@@ -363,7 +365,9 @@ def MCTS(last_move, sign, depth=0):
 
 	if moves:
 		# print(f"GO DEEPER", file=sys.stderr, flush=True)
-		policy, win = model.predict(convert_game_into_nparray(stateT, sign))
+		if stateT not in PCache:
+			PCache[stateT] = model.predict(convert_game_into_nparray(stateT, sign)[np.newaxis, :, :, :])
+		policy, win = PCache[stateT]
 		policy = policy.reshape(9, 9)
 
 		# Node already exist ?
@@ -376,7 +380,7 @@ def MCTS(last_move, sign, depth=0):
 
 			apply_move(state, mini_state, move, sign)
 
-			points = 1 if is_win() else MCTS(move, ('X' if sign == 'O' else 'O'), depth + 1)
+			points = 1 if is_win() else MCTS(move, ('X' if sign == 'O' else 'O'), model, depth + 1)
 			# print(f"BACKPROPAGATION depth {depth} / points {points}", file=sys.stderr, flush=True)
 
 			# - BACKPROPAGATION
@@ -396,8 +400,8 @@ def MCTS(last_move, sign, depth=0):
 			# print(f"SIMULATION ->", file=sys.stderr, flush=True)
 
 			# - SIMULATION / CNN
-			return -simulation(last_move, sign)
-			# return -win
+			# return -simulation(last_move, sign)
+			return -win
 
 	else:
 		# No move left -> Draw
@@ -442,8 +446,9 @@ def print_best_move(last_move, sign):
 
 		signs.append(sign)
 		states.append(convert_game_into_nparray(gameT, sign))
-		qualities.append(mcts_get_qualities(moves))
-
+		qualities.append(mcts_get_qualities(moves).flatten())
+		# print(type(qualities), type(qualities[-1]))
+		# quit()
 		# print(f"last npstate: {states[-1]}")
 
 		apply_move(game, mini_game, best_move, sign)
@@ -512,11 +517,13 @@ def init_mcts():
 	global Pmcts
 	global Qmcts
 	global Sa
+	global PCache
 	Ns = {}
 	Nsa = {}
 	Pmcts = {}
 	Qmcts = {}
 	Sa = {}
+	PCache = {}
 
 	global signs
 	global states
