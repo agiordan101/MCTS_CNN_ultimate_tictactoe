@@ -296,8 +296,8 @@ def select_best_move_id(moves, policy, next_grid, last_move, sign, depth):
 		coords = Nsaid[1]
 		
 		# Compute UCB value of this state/move pair
-		ucb = Qmcts[Nsaid] + c * math.sqrt(Ns[stateT]) / (1 + Nsa[Nsaid])
-		# ucb = Qmcts[Nsaid] + c * policy[coords[0]][coords[1]] * math.sqrt(Ns[stateT]) / (1 + Nsa[Nsaid])
+		# ucb = Qmcts[Nsaid] + c * math.sqrt(Ns[stateT]) / (1 + Nsa[Nsaid])
+		ucb = Qmcts[Nsaid] + c * policy[coords[0]][coords[1]] * math.sqrt(Ns[stateT]) / (1 + Nsa[Nsaid])
 
 		# Save the best
 		if ucb > best_UCB:
@@ -375,6 +375,7 @@ def MCTS(last_move, sign, model, depth=0):
 
 			# print(f"if True", file=sys.stderr, flush=True)
 			# - SELECTION
+			# best_move_id = select_best_move_id(moves, None, next_grid, last_move, sign, depth)
 			best_move_id = select_best_move_id(moves, policy, next_grid, last_move, sign, depth)
 			move = best_move_id[1]
 

@@ -4,8 +4,8 @@ import mcts_rave_CNN as mcts
 from mcts_rave_CNN import *
 import matplotlib.pyplot as plt
 
-mcts_iter = 100
-n_game = 1
+mcts_iter = 500
+n_game = 10
 
 # ----- MAIN -----
 
@@ -69,6 +69,7 @@ for k in range(n_game):
 
     init_mcts()
     cross_win = play_game(model)
+    # cross_win = play_game(None)
 
     # First player = X but first states/qualities save is O
     win = [-cross_win if i % 2 == 0 else cross_win for i in range(len(mcts.states))]
@@ -82,6 +83,8 @@ for k in range(n_game):
     # win = np.array(win)
 
     history = model.fit(np.array(mcts.states), [np.array(mcts.qualities), np.array(win)])
+    
+    
     # print([k for k, _ in history.history.items()])
     # loss_curve = history.history["loss"]
     # pacc_curve = history.history["p_accuracy"]
@@ -101,5 +104,15 @@ for k in range(n_game):
     # loss, acc = model.evaluate(self.features, self.targets)
     # print("Test Loss", loss)
     # print("Test Accuracy", acc)
+
+# with open("dataset.mcts", 'a') as f:
+#     for state, quality, winning in zip(mcts.states, mcts.qualities, win):
+#         # [[f.write(f"{sign},") for sign in row] for row in state]
+#         # [[f.write(f"{sign},") for sign in row] for row in quality]
+#         # print(f"state {type(state)}: {state}")
+#         # print(f"quality {type(quality)}: {quality}")
+#         [f.write(f"{sign},") for sign in state.flatten().tolist()]
+#         [f.write(f"{sign},") for sign in quality.flatten().tolist()]
+#         f.write(f'{winning}\n')
 
 model.model.save(model.name)
