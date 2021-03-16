@@ -23,8 +23,8 @@ def apply_move_both(move, sign):
 
 def play_game(turns):
 
-	turns[0][0].init_mcts()
-	turns[1][0].init_mcts()
+	# turns[0][0].init_mcts()
+	# turns[1][0].init_mcts()
 
 	last_move = (4, 4)
 	player = turns[1][0]

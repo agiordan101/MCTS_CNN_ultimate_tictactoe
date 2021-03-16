@@ -14,7 +14,7 @@ n_game = 20
 @timer
 def play_game():
 
-    init_mcts()
+    # init_mcts()
 
     sign = 'X'
     last_move = (4, 4)
@@ -67,7 +67,7 @@ def play_game():
 for k in range(n_game):
 
     print(f"Play game {k}/{n_game}")
-    init_mcts()
+    # init_mcts()
     cross_win = play_game()
     # cross_win = play_game(None)
 

@@ -66,7 +66,7 @@ model = RLModel(name='model')
 for k in range(1, n_game + 1):
 
     print(f"Play game {k}/{n_game}")
-    init_mcts()
+    # init_mcts()
     cross_win = play_game(model)
     # cross_win = play_game(None)
 
