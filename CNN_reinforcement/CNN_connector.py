@@ -1,5 +1,6 @@
 import numpy as np
 import tensorflow as tf
+from sklearn.model_selection import train_test_split
 
 all_yxs = []
 for y in range(9):
@@ -98,7 +99,19 @@ class RLModel:
 		return model
 
 	def fit(self, features, targets, epochs=100):
-		return self.model.fit(features, targets, epochs=epochs)
+		rng_state = np.random.get_state()
+		numpy.random.shuffle(features)
+		for t in targets:
+			numpy.random.set_state(rng_state)
+			numpy.random.shuffle(targets)
+		x_train, x_test, y_train, y_test = train_test_split(
+			features, targets, test_size=0.2
+		)
+		return self.model.fit(x_train, y_train,
+			validation_data=(x_test, y_test),
+			epochs=epochs,
+			callbacks=[tf.keras.callbacks.EarlyStopping()]
+		)
 	
 	def predict(self, features):
 		return self.model.predict(features)

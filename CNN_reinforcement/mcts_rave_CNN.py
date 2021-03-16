@@ -375,21 +375,21 @@ def MCTS(last_move, sign, model, depth=0):
 		# print(f"GO DEEPER", file=sys.stderr, flush=True)
 
 		if stateT not in PCache:
-			PCache[stateT] = model.predict(convert_game_into_nparray(stateT, sign)[np.newaxis, :, :, :])
+			policy, win = model.predict(convert_game_into_nparray(stateT, sign)[np.newaxis, :, :, :])
+			policy = policy.reshape(9, 9)
+			policy *= create_mask(moves)
+			win = win[0, 0]
+			PCache[stateT] = policy, win
 
 		policy, win = PCache[stateT]
 
-		policy = policy.reshape(9, 9)
-		policy *= create_mask(moves)
+		# if stateT not in PCache:
+		# 	PCache[stateT] = model.predict(convert_game_into_nparray(stateT, sign)[np.newaxis, :, :, :])
+		# policy, win = PCache[stateT]
+		# policy = policy.reshape(9, 9)
+		# policy *= create_mask(moves)
 		# print(f"policy: {policy}")
-
-		win = win[0, 0]
-
-		
-		# if any([x < 0 for x in policy.flatten()]):
-		# 	print(f"POLICY NEG mcts: {policy}")
-		# 	exit(0)
-
+		# win = win[0, 0]
 
 		# Node already exist ?
 		if stateT in Ns:
@@ -458,7 +458,7 @@ def print_best_move(last_move, sign):
 	print(f"Nbr moves {len(moves)}", file=sys.stderr, flush=True)
 	for Nsaid in moves:
 
-		print(f"Possible move -> {Nsaid[1]}: {Qmcts[Nsaid]}\t= {Pmcts[Nsaid]}\t/ {Nsa[Nsaid]}", file=sys.stderr, flush=True)
+		print(f"Possible move -> {Nsaid[1]}: {Qmcts[Nsaid]}\t= {Pmcts[Nsaid]}\t/ {Nsa[Nsaid]}\tPolicy: {PCache[gameT][0]}", file=sys.stderr, flush=True)
 
 		if Qmcts[Nsaid] > best_value:
 			best_move = Nsaid[1]
