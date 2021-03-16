@@ -29,6 +29,7 @@ Sa = {}     # Moves save -> key: (stateT, last_move), value: moves
 
 # Hyperparameters
 c = 4				#4 because policy => [0, 1] so sqrt 2 is too small
+miness_inf = -float("inf")
 
 # Game state
 game = [[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']]
@@ -238,45 +239,45 @@ def is_grid_draw(board, all_grid):
 	return 1
 
 @timer
-def is_win():
+def is_win(mini_board):
 
-	if mini_state[0][0] != ' ':
+	if mini_board[0][0] != ' ':
 		# Horizontale 1
-		if mini_state[0][0] == mini_state[0][1] and mini_state[0][1] == mini_state[0][2]:
-			return mini_state[0][0]
+		if mini_board[0][0] == mini_board[0][1] and mini_board[0][1] == mini_board[0][2]:
+			return mini_board[0][0]
 
 		# Diagonale 00 to 22
-		if mini_state[0][0] == mini_state[1][1] and mini_state[1][1] == mini_state[2][2]:
-			return mini_state[0][0]
+		if mini_board[0][0] == mini_board[1][1] and mini_board[1][1] == mini_board[2][2]:
+			return mini_board[0][0]
 
-	if mini_state[1][0] != ' ':
+	if mini_board[1][0] != ' ':
 		# Horizontale 2
-		if mini_state[1][0] == mini_state[1][1] and mini_state[1][1] == mini_state[1][2]:
-			return mini_state[1][0]
+		if mini_board[1][0] == mini_board[1][1] and mini_board[1][1] == mini_board[1][2]:
+			return mini_board[1][0]
 
-	if mini_state[2][0] != ' ':
+	if mini_board[2][0] != ' ':
 		# Horizontale 3
-		if mini_state[2][0] == mini_state[2][1] and mini_state[2][1] == mini_state[2][2]:
-			return mini_state[2][0]
+		if mini_board[2][0] == mini_board[2][1] and mini_board[2][1] == mini_board[2][2]:
+			return mini_board[2][0]
 
 		# Diagonale 20 to 02
-		if mini_state[2][0] == mini_state[1][1] and mini_state[1][1] == mini_state[0][2]:
-			return mini_state[2][0]
+		if mini_board[2][0] == mini_board[1][1] and mini_board[1][1] == mini_board[0][2]:
+			return mini_board[2][0]
 
-	if mini_state[0][0] != ' ':
+	if mini_board[0][0] != ' ':
 		# Verticale 1
-		if mini_state[0][0] == mini_state[1][0] and mini_state[1][0] == mini_state[2][0]:
-			return mini_state[0][0]
+		if mini_board[0][0] == mini_board[1][0] and mini_board[1][0] == mini_board[2][0]:
+			return mini_board[0][0]
 
-	if mini_state[0][1] != ' ':
+	if mini_board[0][1] != ' ':
 		# Verticale 2
-		if mini_state[0][1] == mini_state[1][1] and mini_state[1][1] == mini_state[2][1]:
-			return mini_state[0][1]
+		if mini_board[0][1] == mini_board[1][1] and mini_board[1][1] == mini_board[2][1]:
+			return mini_board[0][1]
 
-	if mini_state[0][2] != ' ':
+	if mini_board[0][2] != ' ':
 		# Verticale 3
-		if mini_state[0][2] == mini_state[1][2] and mini_state[1][2] == mini_state[2][2]:
-			return mini_state[0][2]
+		if mini_board[0][2] == mini_board[1][2] and mini_board[1][2] == mini_board[2][2]:
+			return mini_board[0][2]
 
 	return 0
 
@@ -287,25 +288,13 @@ def select_best_move_id(moves, policy, next_grid, last_move, sign, depth):
 
 	# print(f"SELECTION nbr moves {len(moves)}", file=sys.stderr, flush=True)
 	best_move = None
-	best_UCB = -1000000
+	best_UCB = miness_inf
 	random.shuffle(moves)
 
 	for Nsaid in moves:
 
-		stateT = Nsaid[0]
-		coords = Nsaid[1]
-
-		# if isinstance(coord, np.array()):
-		# 	print(f"WRONG TYPE {coord}")
-		# 	exit(0)
-
-		# if policy[coords[0]][coords[1]] < 0:
-		# 	print(f"POLICY NEG: {policy}")
-		# 	exit(0)
-
 		# Compute UCB value of this state/move pair
-		# ucb = Qmcts[Nsaid] + c * math.sqrt(Ns[stateT]) / (1 + Nsa[Nsaid])
-		ucb = Qmcts[Nsaid] + c * policy[coords[0]][coords[1]] * math.sqrt(Ns[stateT]) / (1 + Nsa[Nsaid])
+		ucb = Qmcts[Nsaid] + c * policy[Nsaid[1][0]][Nsaid[1][1]] * math.sqrt(Ns[Nsaid[0]]) / (1 + Nsa[Nsaid])
 
 		# Save the best
 		if ucb > best_UCB:
@@ -353,7 +342,7 @@ def simulation(last_move, sign):
 	# Apply move
 	apply_move(state, mini_state, move, sign)
 
-	return 1 if is_win() else -simulation(move, ('O' if sign == 'X' else 'X'))
+	return 1 if is_win(mini_state) else -simulation(move, ('O' if sign == 'X' else 'X'))
 
 
 # --- Monte Carlo Tree Search (Rave optimisation) ---
@@ -375,10 +364,21 @@ def MCTS(last_move, sign, model, depth=0):
 		# print(f"GO DEEPER", file=sys.stderr, flush=True)
 
 		if stateT not in PCache:
-			policy, win = model.predict(convert_game_into_nparray(stateT, sign)[np.newaxis, :, :, :])
+			mask = create_mask(moves)
+			game_np = convert_game_into_nparray(stateT, sign)
+
+			# print(f"mask {mask.shape}")
+			# print(f"game_np {game_np.shape}")
+
+			features = np.stack([game_np, mask], axis=-1)
+			# print(f"features {features.shape}")
+
+			policy, win = model.predict(features[np.newaxis, :, :, :])
+
 			policy = policy.reshape(9, 9)
-			policy *= create_mask(moves)
+			policy *= mask
 			win = win[0, 0]
+
 			PCache[stateT] = policy, win
 
 		policy, win = PCache[stateT]
@@ -402,7 +402,7 @@ def MCTS(last_move, sign, model, depth=0):
 
 			apply_move(state, mini_state, move, sign)
 
-			points = 1 if is_win() else MCTS(move, ('X' if sign == 'O' else 'O'), model, depth + 1)
+			points = 1 if is_win(mini_state) else MCTS(move, ('X' if sign == 'O' else 'O'), model, depth + 1)
 			# print(f"BACKPROPAGATION depth {depth} / points {points}", file=sys.stderr, flush=True)
 
 			# - BACKPROPAGATION
@@ -423,7 +423,7 @@ def MCTS(last_move, sign, model, depth=0):
 
 			# - SIMULATION / CNN
 			# return -simulation(last_move, sign)
-			return -win
+			return 1 if win < 0 else -1
 
 	else:
 		# No move left -> Draw
@@ -440,7 +440,8 @@ def mcts_get_qualities(moves): # Tous les move possible pas ue ceux de ce tour l
 
 	qualities = qualities / np.sum(qualities)
 
-	print(qualities)
+	# print(f"Qualities {qualities}")
+	# print(f"Feature -1: {states[-1]}")
 	return qualities
 
 @timer
@@ -448,6 +449,8 @@ def print_best_move(last_move, sign):
 
 	best_move = None
 	best_value = -1000000
+	best_move_2 = None
+	best_value_2 = -1000000
 
 	gameT = tuple([tuple(row) for row in game])
 
@@ -458,18 +461,27 @@ def print_best_move(last_move, sign):
 	print(f"Nbr moves {len(moves)}", file=sys.stderr, flush=True)
 	for Nsaid in moves:
 
-		print(f"Possible move -> {Nsaid[1]}: {Qmcts[Nsaid]}\t= {Pmcts[Nsaid]}\t/ {Nsa[Nsaid]}\tPolicy: {PCache[gameT][0]}", file=sys.stderr, flush=True)
+		# print(f"Possible move -> {Nsaid[1]}: {Qmcts[Nsaid]}\t= {Pmcts[Nsaid]}\t/ {Nsa[Nsaid]}\tPolicy: {PCache[gameT][0]}", file=sys.stderr, flush=True)
+		print(f"Possible move -> {Nsaid[1]}: {Qmcts[Nsaid]}\t= {Pmcts[Nsaid]}\t/ {Nsa[Nsaid]}", file=sys.stderr, flush=True)
 
 		if Qmcts[Nsaid] > best_value:
 			best_move = Nsaid[1]
 			best_value = Qmcts[Nsaid]
+
+		if Nsa[Nsaid] > best_value_2:
+			best_move_2 = Nsaid[1]
+			best_value_2 = Nsa[Nsaid]
+
+	if best_move != best_move_2:
+		print(f"BEST MOVE ARE NOT EQUAL : Qmcts={best_move} / Nsa={best_move_2}")
+		best_move = best_move_2
 
 	if best_move:
 		print(f"{best_move[0]} {best_move[1]}")
 		print(f"'{sign}' apply {best_move}", file=sys.stderr, flush=True)
 
 		signs.append(sign)
-		states.append(convert_game_into_nparray(gameT, sign))
+		states.append(np.stack([convert_game_into_nparray(gameT, sign), create_mask(moves)], axis=-1))
 		qualities.append(mcts_get_qualities(moves).flatten())
 		# print(type(qualities), type(qualities[-1]))
 		# quit()
@@ -509,7 +521,7 @@ def parsing(sign='X'):
 		apply_move(game, mini_game, last_move, sign)
 		reset_state()
 
-		winner = is_win()
+		winner = is_win(mini_state)
 		if winner or all([all([mini_game[tmpy][tmpx] != ' ' for tmpx in range(3)]) for tmpy in range(3)]):
 			if winner:
 				print(f"WINNER IS {winner}")

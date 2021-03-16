@@ -1,12 +1,15 @@
 import numpy as np
 import tensorflow as tf
+from timer import timer
 from sklearn.model_selection import train_test_split
+from numba import jit, njit
 
 all_yxs = []
 for y in range(9):
 	for x in range(9):
 		all_yxs.append((y, x))
 
+@timer
 def create_mask(moves):
 	mask = np.zeros((9, 9))
 
@@ -15,6 +18,7 @@ def create_mask(moves):
 
 	return mask
 
+@timer
 def convert_game_into_nparray(gameT, sign):
 	
 	game_np = np.zeros((9, 9))
@@ -28,11 +32,11 @@ def convert_game_into_nparray(gameT, sign):
 	# print(f"game_np: {game_np}")
 	# print(game_np.shape)
 	# quit()
-	state = game_np[:, :, np.newaxis]
+	state = game_np
 	# print(f"state: {state}")
 	return state
 
-
+@timer
 class RLModel:
 
 	def __init__(self, model_path=None, name=None):
@@ -44,15 +48,15 @@ class RLModel:
 		if model_path:
 			self.model = tf.keras.models.load_model(model_path)
 		else:
-			self.model = self.get_model()
+			self.model = self.get_model_3d()
 			# self.model = self.get_arnav_model()
 
-	def get_model(self):
+	def get_model_3d(self):
 
-		i = tf.keras.layers.Input(shape=(9, 9, 1))
+		i = tf.keras.layers.Input(shape=(9, 9, 2))
 
 		conv = tf.keras.layers.Conv2D(
-			filters=16,
+			filters=32,
 			strides=(3, 3),
 			kernel_size=(3, 3),
 			activation='linear')(i)
@@ -69,7 +73,36 @@ class RLModel:
 		model = tf.keras.Model(inputs=i, outputs=[policy, value])
 		model.summary()
 		model.compile(
-			loss='MSE',
+			loss=['categorical_crossentropy','mean_squared_error'],
+			optimizer='Adam',
+			metrics=[['categorical_accuracy'], ['mean_squared_error']]
+		)
+		model.summary()
+		return model
+
+	def get_model(self):
+
+		i = tf.keras.layers.Input(shape=(9, 9, 1))
+
+		conv = tf.keras.layers.Conv2D(
+			filters=32,
+			strides=(3, 3),
+			kernel_size=(3, 3),
+			activation='linear')(i)
+
+		flatten = tf.keras.layers.Flatten()(conv)
+
+		dense1 = tf.keras.layers.Dense(512, activation='linear')(flatten)
+		dense2 = tf.keras.layers.Dense(256, activation='linear')(dense1)
+
+		policy = tf.keras.layers.Dense(81, activation='softmax', name='p')(dense2)
+		value = tf.keras.layers.Dense(1, activation='tanh', name='v')(dense2)
+
+		# conv = la
+		model = tf.keras.Model(inputs=i, outputs=[policy, value])
+		model.summary()
+		model.compile(
+			loss=['categorical_crossentropy','mean_squared_error'],
 			optimizer='Adam',
 			metrics=['mean_squared_error']
 		)
@@ -98,19 +131,28 @@ class RLModel:
 		model.summary()
 		return model
 
-	def fit(self, features, targets, epochs=100):
+	def fit(self, features, targets, epochs=200):
+
 		rng_state = np.random.get_state()
-		numpy.random.shuffle(features)
+
+		np.random.shuffle(features)
 		for t in targets:
-			numpy.random.set_state(rng_state)
-			numpy.random.shuffle(targets)
-		x_train, x_test, y_train, y_test = train_test_split(
-			features, targets, test_size=0.2
-		)
+			np.random.set_state(rng_state)
+			np.random.shuffle(targets)
+		sep = int(0.2 * len(features))
+
+		x_train = features[sep:]
+		y_train = [t[sep:] for t in targets]
+		x_test = features[:sep]
+		y_test = [t[:sep] for t in targets]
+		
+		# x_train, x_test, y_train, y_test = train_test_split(
+		# 	features, targets, test_size=0.2
+		# )
 		return self.model.fit(x_train, y_train,
 			validation_data=(x_test, y_test),
 			epochs=epochs,
-			callbacks=[tf.keras.callbacks.EarlyStopping()]
+			callbacks=[tf.keras.callbacks.EarlyStopping(patience=10)]
 		)
 	
 	def predict(self, features):
@@ -146,13 +188,29 @@ def parse(dataset_path):
 
 if __name__ == '__main__':
 
-	model = RLModel()
+	model_name = "model_20_1000.mcts_rave"
+	dataset_name = "dataset_20_1000.mcts_rave"
 
-	features, targets = parse('dataset.mcts')
+	model = RLModel(name=model_name)
+
+	features, targets = parse(dataset_name)
+	print(f"features: {len(features)}")
+	print(f"targets: {len(targets[1])}")
+
 	model.fit(features, targets)
-	print(model.predict(features[:1])[0])
+
+	print(np.reshape(features[:1], (9, 9)))
+
+	print(np.reshape(model.predict(features[:1])[0], (9, 9)))
 	print(model.predict(features[:1])[1])
-	print(targets[0][:1])
+
+	print(np.reshape(targets[0][:1], (9, 9)))
 	print(targets[1][:1])
+
+	print(f"Diff: {np.round(targets[0][:1] - model.predict(features[:1])[0], 2)}")
+
+	prediction = model.predict(np.zeros((1, 9, 9, 1)))
+	print(f"test: {prediction}")
+	print(f"Best move: {np.argmax(prediction[0])}")
 
 	model.model.save(model.name)

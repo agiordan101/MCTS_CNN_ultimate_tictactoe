@@ -6,14 +6,15 @@ sys.path.append('../random_simulation_rave')
 
 import mcts_rave_CNN as mctscnn
 import mcts_rave as mctsrd
+import mcts_rave as mctsrd2
 from CNN_connector import *
 
 n_game = 1
 mcts_iter = 500
 
 cross_win = 0
-
-model = RLModel(model_path="model")
+model_name = "model_20_1000.mcts_rave"
+model = RLModel(name=model_name, model_path=model_name)
 
 def apply_move_both(move, sign):
 	mctscnn.apply_move(mctscnn.game, mctscnn.mini_game, move, sign)
@@ -22,19 +23,20 @@ def apply_move_both(move, sign):
 
 def play_game(turns):
 
-	mctsrd.init_mcts()
-	mctscnn.init_mcts()
+	turns[0][0].init_mcts()
+	turns[1][0].init_mcts()
+
+	last_move = (4, 4)
+	player = turns[1][0]
+	sign = turns[1][1]
+	n_iter = turns[1][2]
 
 	# Optimization for turn 1
-	sign = 'X'
-	last_move = (4, 4)
-	# player = mctscnn
-	player = mctsrd
 	apply_move_both(last_move, sign)
 	print(f"'{sign}' apply {last_move}")
 
 	i = 0
-	for k in range(mcts_iter):
+	for k in range(n_iter):
 		player.reset_state()
 		player.MCTS(last_move, sign=sign, model=model)
 		i += 1
@@ -44,11 +46,11 @@ def play_game(turns):
 
 	while True:
 
-		for player, sign in turns:
-			
+		for player, sign, n_iter in turns:
+
 			i = 0
 			# while time.time() - begin_time < turn_time:
-			for k in range(mcts_iter):
+			for k in range(n_iter):
 				player.reset_state()
 
 				# print(f"MONTE CARLO BEGIN {i}", file=sys.stderr, flush=True)
@@ -64,7 +66,7 @@ def play_game(turns):
 			apply_move_both(last_move, sign)
 			player.print_board(player.game, player.mini_game) # For console tests
 
-			winner = player.is_win()
+			winner = player.is_win(player.mini_game)
 			if winner or all([all([player.mini_game[tmpy][tmpx] != ' ' for tmpx in range(3)]) for tmpy in range(3)]):
 				if winner:
 					print(f"WINNER IS {sign}")
@@ -77,7 +79,9 @@ def play_game(turns):
 
 
 for k in range(n_game):
-	cross_win += play_game([(mctscnn, 'O'), (mctsrd, 'X')])
+	# cross_win += play_game([(mctscnn, 'O', mcts_iter), (mctsrd, 'X', mcts_iter)])
+	cross_win += play_game([(mctsrd, 'O', mcts_iter), (mctscnn, 'X', mcts_iter)])
+	# cross_win += play_game([(mctscnn, 'O', 500), (mctsrd, 'X', 500)])
 	# cross_win += play_game([(mctsrd, 'O'), (mctscnn, 'X')])
 
 # for k in range(n_game):

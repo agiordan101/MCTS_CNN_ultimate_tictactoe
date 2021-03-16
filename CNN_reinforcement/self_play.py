@@ -4,8 +4,8 @@ import mcts_rave_CNN as mcts
 from mcts_rave_CNN import *
 import matplotlib.pyplot as plt
 
-mcts_iter = 500
-n_game = 10
+mcts_iter = 10
+n_game = 1
 
 # ----- MAIN -----
 
@@ -28,8 +28,6 @@ def play_game(model):
 
     print_board(mcts.game, mcts.mini_game)
 
-    # turn_time = 0.990
-    turn_time = 0.090
     while True:
 
         i = 0
@@ -47,8 +45,8 @@ def play_game(model):
         last_move = print_best_move(last_move, sign)
 
         print_board(mcts.game, mcts.mini_game) # For console tests
-        
-        winner = mcts.is_win()
+
+        winner = mcts.is_win(mcts.mini_game)
         if winner or all([all([mcts.mini_game[tmpy][tmpx] != ' ' for tmpx in range(3)]) for tmpy in range(3)]):
             if winner:
                 print(f"WINNER IS {winner}")
@@ -65,7 +63,7 @@ def play_game(model):
 
 model = RLModel(name='model')
 
-for k in range(n_game):
+for k in range(1, n_game + 1):
 
     print(f"Play game {k}/{n_game}")
     init_mcts()
@@ -81,13 +79,14 @@ for k in range(n_game):
     print(mcts.signs)
     print(np.array(win).shape)
     print(f"cross_win at 0: {win}")
+    print(f"Feature -1: {mcts.states[-1]}")
 
     # win = np.array(win)
 
     if cross_win:
         history = model.fit(np.array(mcts.states), [np.array(mcts.qualities), np.array(win)])
 
-        with open("dataset.mcts", 'a') as f:
+        with open("dataset.mcts_rave_CNN", 'a') as f:
             for state, quality, winning in zip(mcts.states, mcts.qualities, win):
                 # [[f.write(f"{sign},") for sign in row] for row in state]
                 # [[f.write(f"{sign},") for sign in row] for row in quality]
@@ -99,24 +98,22 @@ for k in range(n_game):
 
         model.model.save(model.name)
 
-    # print([k for k, _ in history.history.items()])
-    # loss_curve = history.history["loss"]
-    # pacc_curve = history.history["p_accuracy"]
-    # vacc_curve = history.history["v_accuracy"]
-    # plt.plot(loss_curve, label="Train")
-    # plt.legend(loc='upper left')
-    # plt.title("Loss")
-    # plt.show()
-    
-    # plt.plot(pacc_curve)
-    # plt.plot(vacc_curve)
-    # plt.ylabel('accuracy')
-    # plt.xlabel('epoch')
-    # plt.legend(['policy', 'value'], loc='upper left')
+# print([k for k, _ in history.history.items()])
+# loss_curve = history.history["loss"]
+# pacc_curve = history.history["p_accuracy"]
+# vacc_curve = history.history["v_accuracy"]
+# plt.plot(loss_curve, label="Train")
+# plt.legend(loc='upper left')
+# plt.title("Loss")
+# plt.show()
 
-    # plt.show()
-    # loss, acc = model.evaluate(self.features, self.targets)
-    # print("Test Loss", loss)
-    # print("Test Accuracy", acc)
+# plt.plot(pacc_curve)
+# plt.plot(vacc_curve)
+# plt.ylabel('accuracy')
+# plt.xlabel('epoch')
+# plt.legend(['policy', 'value'], loc='upper left')
 
-
+# plt.show()
+# loss, acc = model.evaluate(self.features, self.targets)
+# print("Test Loss", loss)
+# print("Test Accuracy", acc)
