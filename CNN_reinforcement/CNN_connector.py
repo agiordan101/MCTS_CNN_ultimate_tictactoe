@@ -6,6 +6,14 @@ for y in range(9):
 	for x in range(9):
 		all_yxs.append((y, x))
 
+def create_mask(moves):
+	mask = np.zeros((9, 9))
+
+	for s, coord in moves:
+		mask[coord] = 1
+
+	return mask
+
 def convert_game_into_nparray(gameT, sign):
 	
 	game_np = np.zeros((9, 9))
@@ -26,25 +34,34 @@ def convert_game_into_nparray(gameT, sign):
 
 class RLModel:
 
-	def __init__(self, name=None):
+	def __init__(self, model_path=None, name=None):
 		self.name = name or 'model'
 		# if name:
 		# 	self.model = tf.keras.models.load_model(name)
 		# else:
-		self.model = self.get_model()
+
+		if model_path:
+			self.model = tf.keras.models.load_model(model_path)
+		else:
+			self.model = self.get_model()
+			# self.model = self.get_arnav_model()
 
 	def get_model(self):
+
 		i = tf.keras.layers.Input(shape=(9, 9, 1))
+
 		conv = tf.keras.layers.Conv2D(
 			filters=16,
 			strides=(3, 3),
 			kernel_size=(3, 3),
 			activation='linear')(i)
+
 		flatten = tf.keras.layers.Flatten()(conv)
+
 		dense1 = tf.keras.layers.Dense(512, activation='linear')(flatten)
 		dense2 = tf.keras.layers.Dense(256, activation='linear')(dense1)
 
-		policy = tf.keras.layers.Dense(81, activation='tanh', name='p')(dense2)
+		policy = tf.keras.layers.Dense(81, activation='softmax', name='p')(dense2)
 		value = tf.keras.layers.Dense(1, activation='tanh', name='v')(dense2)
 
 		# conv = la
@@ -53,8 +70,30 @@ class RLModel:
 		model.compile(
 			loss='MSE',
 			optimizer='Adam',
-			metrics=['accuracy']
+			metrics=['mean_squared_error']
 		)
+		model.summary()
+		return model
+	
+	def get_arnav_model(self):
+
+		input_layer = tf.keras.layers.Input(shape=(9,9, 1), name="BoardInput")
+		# reshape = tf.keras.layers.core.Reshape((9,9,1))(input_layer)
+		conv_1 = tf.keras.layers.Conv2D(128, (3,3), padding='valid', activation='relu', name='conv1')(input_layer)
+		conv_2 = tf.keras.layers.Conv2D(128, (3,3), padding='valid', activation='relu', name='conv2')(conv_1)
+		conv_3 = tf.keras.layers.Conv2D(128, (3,3), padding='valid', activation='relu', name='conv3')(conv_2)
+
+		conv_3_flat = tf.keras.layers.Flatten()(conv_3)
+
+		dense_1 = tf.keras.layers.Dense(512, activation='relu', name='dense1')(conv_3_flat)
+		dense_2 = tf.keras.layers.Dense(256, activation='relu', name='dense2')(dense_1)
+
+		pi = tf.keras.layers.Dense(81, activation="softmax", name='pi')(dense_2)
+		v = tf.keras.layers.Dense(1, activation="tanh", name='value')(dense_2)
+
+		model = tf.keras.models.Model(inputs=input_layer, outputs=[pi, v])
+		model.compile(loss=['categorical_crossentropy','mean_squared_error'], optimizer=tf.keras.optimizers.Adam())
+
 		model.summary()
 		return model
 

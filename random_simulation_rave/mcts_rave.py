@@ -340,7 +340,7 @@ def simulation(last_move, sign):
 
 # --- Monte Carlo Tree Search (Rave optimisation) ---
 @timer
-def MCTS(last_move, sign, depth=0):
+def MCTS(last_move, sign, model=None, depth=0):
 
 
     #if depth > 4:
@@ -370,7 +370,7 @@ def MCTS(last_move, sign, depth=0):
 
             apply_move(state, mini_state, move, sign)
 
-            points = 1 if is_win() else MCTS(move, ('X' if sign == 'O' else 'O'), depth + 1)
+            points = 1 if is_win() else MCTS(move, ('X' if sign == 'O' else 'O'), depth=depth + 1)
             # print(f"BACKPROPAGATION depth {depth} / points {points}", file=sys.stderr, flush=True)
             
             # - BACKPROPAGATION

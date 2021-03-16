@@ -15,7 +15,7 @@ def play_game(model):
     # Optimization for turn 1
     sign = 'X'
     last_move = (4, 4)
-    apply_move(mcts.game, mcts.mini_game, last_move, 'X')
+    apply_move(mcts.game, mcts.mini_game, last_move, sign)
     print(f"'{sign}' apply {last_move}")
 
     sign = 'O'
@@ -48,7 +48,7 @@ def play_game(model):
 
         print_board(mcts.game, mcts.mini_game) # For console tests
         
-        winner = is_win()
+        winner = mcts.is_win()
         if winner or all([all([mcts.mini_game[tmpy][tmpx] != ' ' for tmpx in range(3)]) for tmpy in range(3)]):
             if winner:
                 print(f"WINNER IS {winner}")
@@ -63,10 +63,11 @@ def play_game(model):
         # turn_time = 0.095
 
 
-model = RLModel(name='first_test')
+model = RLModel(name='model')
 
 for k in range(n_game):
 
+    print(f"Play game {k}/{n_game}")
     init_mcts()
     cross_win = play_game(model)
     # cross_win = play_game(None)
@@ -74,17 +75,30 @@ for k in range(n_game):
     # First player = X but first states/qualities save is O
     win = [-cross_win if i % 2 == 0 else cross_win for i in range(len(mcts.states))]
 
+    print(f"END GAME {k}/{n_game}")
     print(np.array(mcts.states).shape)
     print(np.array(mcts.qualities).shape)
     print(mcts.signs)
     print(np.array(win).shape)
-    print(f"cross_win: {cross_win}")
+    print(f"cross_win at 0: {win}")
 
     # win = np.array(win)
 
-    history = model.fit(np.array(mcts.states), [np.array(mcts.qualities), np.array(win)])
-    
-    
+    if cross_win:
+        history = model.fit(np.array(mcts.states), [np.array(mcts.qualities), np.array(win)])
+
+        with open("dataset.mcts", 'a') as f:
+            for state, quality, winning in zip(mcts.states, mcts.qualities, win):
+                # [[f.write(f"{sign},") for sign in row] for row in state]
+                # [[f.write(f"{sign},") for sign in row] for row in quality]
+                # print(f"state {type(state)}: {state}")
+                # print(f"quality {type(quality)}: {quality}")
+                [f.write(f"{sign},") for sign in state.flatten().tolist()]
+                [f.write(f"{sign},") for sign in quality.flatten().tolist()]
+                f.write(f'{winning}\n')
+
+        model.model.save(model.name)
+
     # print([k for k, _ in history.history.items()])
     # loss_curve = history.history["loss"]
     # pacc_curve = history.history["p_accuracy"]
@@ -105,14 +119,4 @@ for k in range(n_game):
     # print("Test Loss", loss)
     # print("Test Accuracy", acc)
 
-# with open("dataset.mcts", 'a') as f:
-#     for state, quality, winning in zip(mcts.states, mcts.qualities, win):
-#         # [[f.write(f"{sign},") for sign in row] for row in state]
-#         # [[f.write(f"{sign},") for sign in row] for row in quality]
-#         # print(f"state {type(state)}: {state}")
-#         # print(f"quality {type(quality)}: {quality}")
-#         [f.write(f"{sign},") for sign in state.flatten().tolist()]
-#         [f.write(f"{sign},") for sign in quality.flatten().tolist()]
-#         f.write(f'{winning}\n')
 
-model.model.save(model.name)

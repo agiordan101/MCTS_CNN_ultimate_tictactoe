@@ -28,7 +28,7 @@ PCache = {}  # Prediction of CNN cached between every fit phase
 Sa = {}     # Moves save -> key: (stateT, last_move), value: moves
 
 # Hyperparameters
-c = math.sqrt(2)
+c = 4				#4 because policy => [0, 1] so sqrt 2 is too small
 
 # Game state
 game = [[' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' '], [' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ', ' ']]
@@ -294,7 +294,15 @@ def select_best_move_id(moves, policy, next_grid, last_move, sign, depth):
 
 		stateT = Nsaid[0]
 		coords = Nsaid[1]
-		
+
+		# if isinstance(coord, np.array()):
+		# 	print(f"WRONG TYPE {coord}")
+		# 	exit(0)
+
+		# if policy[coords[0]][coords[1]] < 0:
+		# 	print(f"POLICY NEG: {policy}")
+		# 	exit(0)
+
 		# Compute UCB value of this state/move pair
 		# ucb = Qmcts[Nsaid] + c * math.sqrt(Ns[stateT]) / (1 + Nsa[Nsaid])
 		ucb = Qmcts[Nsaid] + c * policy[coords[0]][coords[1]] * math.sqrt(Ns[stateT]) / (1 + Nsa[Nsaid])
@@ -365,10 +373,23 @@ def MCTS(last_move, sign, model, depth=0):
 
 	if moves:
 		# print(f"GO DEEPER", file=sys.stderr, flush=True)
+
 		if stateT not in PCache:
 			PCache[stateT] = model.predict(convert_game_into_nparray(stateT, sign)[np.newaxis, :, :, :])
+
 		policy, win = PCache[stateT]
+
 		policy = policy.reshape(9, 9)
+		policy *= create_mask(moves)
+		# print(f"policy: {policy}")
+
+		win = win[0, 0]
+
+		
+		# if any([x < 0 for x in policy.flatten()]):
+		# 	print(f"POLICY NEG mcts: {policy}")
+		# 	exit(0)
+
 
 		# Node already exist ?
 		if stateT in Ns:
@@ -415,7 +436,9 @@ def mcts_get_qualities(moves): # Tous les move possible pas ue ceux de ce tour l
 
 	for move in moves:
 		y, x = move[1]
-		qualities[y, x, 0] = Qmcts[move]
+		qualities[y, x, 0] = Nsa[move] / Ns[move[0]]
+
+	qualities = qualities / np.sum(qualities)
 
 	print(qualities)
 	return qualities
