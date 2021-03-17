@@ -4,13 +4,15 @@ import mcts_rave_CNN as mcts
 from mcts_rave_CNN import *
 import matplotlib.pyplot as plt
 
-mcts_iter = 10
+mcts_iter = 600
 n_game = 1
 
 # ----- MAIN -----
 
 @timer
 def play_game(model):
+
+    mcts.init_mcts()
 
     # Optimization for turn 1
     sign = 'X'
@@ -61,19 +63,19 @@ def play_game(model):
         # turn_time = 0.095
 
 
-model = RLModel(name='model')
+model = RLModel(name='model_night_0')
 
-for k in range(1, n_game + 1):
+# for k in range(1, n_game + 1):
+while True:
 
-    print(f"Play game {k}/{n_game}")
-    # init_mcts()
+    # print(f"Play game {k}/{n_game}")
     cross_win = play_game(model)
     # cross_win = play_game(None)
 
     # First player = X but first states/qualities save is O
     win = [-cross_win if i % 2 == 0 else cross_win for i in range(len(mcts.states))]
 
-    print(f"END GAME {k}/{n_game}")
+    # print(f"END GAME {k}/{n_game}")
     print(np.array(mcts.states).shape)
     print(np.array(mcts.qualities).shape)
     print(mcts.signs)
@@ -86,7 +88,7 @@ for k in range(1, n_game + 1):
     if cross_win:
         history = model.fit(np.array(mcts.states), [np.array(mcts.qualities), np.array(win)])
 
-        with open("dataset.mcts_rave_CNN", 'a') as f:
+        with open("dataset_night_0.mcts_rave_CNN", 'a') as f:
             for state, quality, winning in zip(mcts.states, mcts.qualities, win):
                 # [[f.write(f"{sign},") for sign in row] for row in state]
                 # [[f.write(f"{sign},") for sign in row] for row in quality]
@@ -95,6 +97,7 @@ for k in range(1, n_game + 1):
                 [f.write(f"{sign},") for sign in state.flatten().tolist()]
                 [f.write(f"{sign},") for sign in quality.flatten().tolist()]
                 f.write(f'{winning}\n')
+            f.close()
 
         model.model.save(model.name)
 

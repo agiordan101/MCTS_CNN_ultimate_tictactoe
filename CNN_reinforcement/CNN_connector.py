@@ -56,7 +56,7 @@ class RLModel:
 		i = tf.keras.layers.Input(shape=(9, 9, 2))
 
 		conv = tf.keras.layers.Conv2D(
-			filters=32,
+			filters=16,
 			strides=(3, 3),
 			kernel_size=(3, 3),
 			activation='linear')(i)

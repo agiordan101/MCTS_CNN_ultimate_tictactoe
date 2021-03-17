@@ -423,7 +423,8 @@ def MCTS(last_move, sign, model, depth=0):
 
 			# - SIMULATION / CNN
 			# return -simulation(last_move, sign)
-			return 1 if win < 0 else -1
+			# return 1 if win < 0 else -1
+			return -win
 
 	else:
 		# No move left -> Draw
@@ -469,12 +470,12 @@ def print_best_move(last_move, sign):
 			best_value = Qmcts[Nsaid]
 
 		if Nsa[Nsaid] > best_value_2:
-			best_move_2 = Nsaid[1]
+			best_move = Nsaid[1]
 			best_value_2 = Nsa[Nsaid]
 
-	if best_move != best_move_2:
-		print(f"BEST MOVE ARE NOT EQUAL : Qmcts={best_move} / Nsa={best_move_2}")
-		best_move = best_move_2
+	# if best_move != best_move_2:
+	# 	print(f"BEST MOVE ARE NOT EQUAL : Qmcts={best_move} / Nsa={best_move_2}")
+	# 	best_move = best_move_2
 
 	if best_move:
 		print(f"{best_move[0]} {best_move[1]}")

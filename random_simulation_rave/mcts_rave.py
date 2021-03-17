@@ -94,6 +94,7 @@ def get_moves_id(stateT, last_move, mcts=False):
 	yxs = all_yxs
 	next_grid = None
 
+	# print(f"get moves id to print best choice {last_move}\n{stateT}", file=sys.stderr, flush=True)
 	if last_move[0] != -1:
 
 		y_next_grid, x_next_grid = get_next_grid(last_move)
@@ -294,7 +295,8 @@ def select_best_move_id(moves, next_grid, last_move, sign, depth):
 		stateT = Nsaid[0]
 		
 		# Compute UCB value of this state/move pair
-		ucb = Qmcts[Nsaid] + c * math.sqrt(math.log(Ns[stateT])) / (1 + Nsa[Nsaid])
+		# ucb = Qmcts[Nsaid] + c * math.sqrt(math.log(Ns[stateT])) / (1 + Nsa[Nsaid])
+		ucb = Qmcts[Nsaid] + c * math.sqrt(Ns[stateT]) / (1 + Nsa[Nsaid])
 
 		# Save the best
 		if ucb > best_UCB:
@@ -347,8 +349,7 @@ def simulation(last_move, sign):
 
 # --- Monte Carlo Tree Search (Rave optimisation) ---
 @timer
-def MCTS(last_move, sign, model=None, depth=0):
-
+def MCTS(last_move, sign, model=None, depth=0): #model=None -> to self_play 2 algo
 
 	#if depth > 4:
 	#    print(f"MCTS {depth} / last_move {last_move}", file=sys.stderr, flush=True)
@@ -378,8 +379,10 @@ def MCTS(last_move, sign, model=None, depth=0):
 			apply_move(state, mini_state, move, sign)
 
 			points = 1 if is_win(mini_state) else MCTS(move, ('X' if sign == 'O' else 'O'), depth=depth + 1)
-			# print(f"BACKPROPAGATION depth {depth} / points {points}", file=sys.stderr, flush=True)
 			
+			if depth == 0:
+				print(f"BACKPROPAGATION depth {depth} / points {points}\nbest move id{best_move_id}", file=sys.stderr, flush=True)
+
 			# - BACKPROPAGATION
 			Ns[stateT] += 1
 			Nsa[best_move_id] += 1
@@ -482,10 +485,10 @@ def print_best_move(last_move, sign):
 
 	print_board(gameT, mini_game)
 
-	# print(f"fetch moves id to print best choice {last_move}\n{gameT}", file=sys.stderr, flush=True)
+	print(f"fetch moves id to print best choice {last_move}\n{gameT}", file=sys.stderr, flush=True)
 	moves, next_grid = fetch_moves_id((gameT, last_move))
 
-	# print(f"Last move {last_move}", file=sys.stderr, flush=True)
+	print(f"Last move {last_move} -> {[move for s, move in moves]}", file=sys.stderr, flush=True)
 	for Nsaid in moves:
 
 		print(f"Possible move -> {Nsaid[1]}: {Qmcts[Nsaid]}\t= {Pmcts[Nsaid]}\t/ {Nsa[Nsaid]}", file=sys.stderr, flush=True)
@@ -499,7 +502,7 @@ def print_best_move(last_move, sign):
 		print(f"Apply my move -> {best_move}", file=sys.stderr, flush=True)
 
 		signs.append(sign)
-		states.append(convert_game_into_nparray(gameT, sign))
+		states.append(np.stack([convert_game_into_nparray(gameT, sign), create_mask(moves)], axis=-1))
 		qualities.append(mcts_get_qualities(moves).flatten())
 
 		apply_move(game, mini_game, best_move, sign)
@@ -509,9 +512,9 @@ def print_best_move(last_move, sign):
 
 	else:
 		print(f"[ERROR MCTS RAVE] NO BEST VALUE")
-		print(f"Nbr moves {len(moves)}", file=sys.stderr, flush=True)
-		print(f"next_grid: {next_grid}")
 		print(f"last_move: {last_move}")
+		print(f"next_grid: {next_grid}")
+		print(f"Nbr moves {len(moves)}", file=sys.stderr, flush=True)
 		exit(1)
 
 def init_mcts():
