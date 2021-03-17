@@ -166,13 +166,15 @@ def parse(dataset_path):
 		states = []
 		qualities = []
 		values = []
-		for row in f.read().split('\n'):
+		for row in f.read().split('\n')[:-1]:
 			srow = row.split(',')
 			# print(srow)
-			if len(srow) == 163:
-				states.append(np.array(srow[:81]).astype(float).reshape(9, 9, 1))
-				qualities.append(np.array(srow[81:162]).astype(float))
-				values.append(np.array(srow[162:]).astype(float))
+			# if len(srow) == 163:
+			states.append(np.array(srow[:162]).astype(float).reshape(9, 9, 2))
+			# print(states[-1])
+			# print()
+			qualities.append(np.array(srow[162:-1]).astype(float))
+			values.append(np.array(srow[-1]).astype(float))
 			# if np.array(states[-1]).shape != (81,):
 			# 	print(srow)
 			# 	print(np.array(states[-1]).shape)
@@ -188,8 +190,8 @@ def parse(dataset_path):
 
 if __name__ == '__main__':
 
-	model_name = "model_20_1000.mcts_rave"
-	dataset_name = "dataset_20_1000.mcts_rave"
+	model_name = "models\model_night_0.mcts_rave_CNN"
+	dataset_name = "datasets\dataset_night_0.mcts_rave_CNN"
 
 	model = RLModel(name=model_name)
 
@@ -199,7 +201,7 @@ if __name__ == '__main__':
 
 	model.fit(features, targets)
 
-	print(np.reshape(features[:1], (9, 9)))
+	print(np.reshape(features[:1], (9, 9, 2)))
 
 	print(np.reshape(model.predict(features[:1])[0], (9, 9)))
 	print(model.predict(features[:1])[1])
@@ -209,7 +211,7 @@ if __name__ == '__main__':
 
 	print(f"Diff: {np.round(targets[0][:1] - model.predict(features[:1])[0], 2)}")
 
-	prediction = model.predict(np.zeros((1, 9, 9, 1)))
+	prediction = model.predict(np.zeros((1, 9, 9, 2)))
 	print(f"test: {prediction}")
 	print(f"Best move: {np.argmax(prediction[0])}")
 
