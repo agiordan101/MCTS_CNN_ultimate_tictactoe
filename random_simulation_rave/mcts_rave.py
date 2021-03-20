@@ -29,6 +29,7 @@ Sa = {}     # Moves save -> key: (stateT, last_move), value: moves
 signs = []
 states = []
 qualities = []
+masks = []
 
 # Hyperparameters
 c = math.sqrt(2)
@@ -380,8 +381,8 @@ def MCTS(last_move, sign, model=None, depth=0): #model=None -> to self_play 2 al
 
 			points = 1 if is_win(mini_state) else MCTS(move, ('X' if sign == 'O' else 'O'), depth=depth + 1)
 			
-			if depth == 0:
-				print(f"BACKPROPAGATION depth {depth} / points {points}\nbest move id{best_move_id}", file=sys.stderr, flush=True)
+			# if depth == 0:
+			# 	print(f"BACKPROPAGATION depth {depth} / points {points}\nbest move id{best_move_id}", file=sys.stderr, flush=True)
 
 			# - BACKPROPAGATION
 			Ns[stateT] += 1
@@ -501,6 +502,7 @@ def print_best_move(last_move, sign):
 		print(f"{best_move[0]} {best_move[1]}")
 		print(f"Apply my move -> {best_move}", file=sys.stderr, flush=True)
 
+		masks.append(create_mask(moves))
 		signs.append(sign)
 		states.append(np.stack([convert_game_into_nparray(gameT, sign), create_mask(moves)], axis=-1))
 		qualities.append(mcts_get_qualities(moves).flatten())
@@ -534,9 +536,11 @@ def init_mcts():
 	global signs
 	global states
 	global qualities
+	global masks
 	signs = []
 	states = []
 	qualities = []
+	masks = []
 
 	global game
 	global mini_game

@@ -1,8 +1,8 @@
 import numpy as np
 import tensorflow as tf
 from timer import timer
-from sklearn.model_selection import train_test_split
-from numba import jit, njit
+# from sklearn.model_selection import train_test_split
+# from numba import jit, njit
 
 all_yxs = []
 for y in range(9):

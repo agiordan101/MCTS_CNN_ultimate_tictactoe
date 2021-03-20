@@ -9,7 +9,7 @@ print_board(game, mini_game) # For console tests
 # sign = 'X' if last_move[0] == -1 else 'O'
 
 n_iter_mcts = 1000
-n_game = 20
+n_game = 1000
 
 @timer
 def play_game():
@@ -64,28 +64,66 @@ def play_game():
         # turn_time = 0.095
 
 
-for k in range(n_game):
+while True:
+# for k in range(n_game):
 
-    print(f"Play game {k}/{n_game}")
+    # print(f"Play game {k}/{n_game}")
     cross_win = play_game()
     # cross_win = play_game(None)
 
     # First player = X but first states/qualities save is O
     win = [-cross_win if i % 2 == 0 else cross_win for i in range(len(mcts.states))]
 
-    print(f"END GAME {k}/{n_game}")
+    # print(f"END GAME {k}/{n_game}")
     print(np.array(mcts.states).shape)
     print(np.array(mcts.qualities).shape)
     print(mcts.signs)
     print(np.array(win).shape)
     print(f"cross_win at 0: {win}")
 
-    with open("dataset.mcts_rave", 'a') as f:
+    if cross_win != 0:
+        with open("dataset_mixed.csv", 'a+') as f:
+            for state, quality, winning in zip(mcts.states, mcts.qualities, win):
+
+                [f.write(f"{sign},") for sign in state.flatten().tolist()]
+                [f.write(f'{sign},') for sign in np.array(masks).flatten().tolist()]
+                [f.write(f"{sign},") for sign in quality.flatten().tolist()]
+                f.write(f'{winning}\n')
+            f.close()
+
+        with open("dataset_onehot.csv", 'a+') as f:
+            for state, masks, winning in zip(mcts.states, mcts.masks, win):
+
+                player = state.flatten()
+                player = np.where(player == 1, 1, 0)
+                opponent = state.flatten()
+                opponent = np.where(opponent == -1, 1, 0)
+                [f.write(f'{sign},') for sign in player.tolist()]
+                [f.write(f'{sign},') for sign in opponent.tolist()]
+                [f.write(f'{sign},') for sign in np.array(masks).flatten().tolist()]
+                [f.write(f'{sign},') for sign in quality.flatten().tolist()]
+                f.write(f'{winning}\n')
+            f.close()
+
+    with open("dataset_mixed_draw.csv", 'a+') as f:
         for state, quality, winning in zip(mcts.states, mcts.qualities, win):
-            # [[f.write(f"{sign},") for sign in row] for row in state]
-            # [[f.write(f"{sign},") for sign in row] for row in quality]
-            # print(f"state {type(state)}: {state}")
-            # print(f"quality {type(quality)}: {quality}")
+
             [f.write(f"{sign},") for sign in state.flatten().tolist()]
+            [f.write(f'{sign},') for sign in np.array(masks).flatten().tolist()]
             [f.write(f"{sign},") for sign in quality.flatten().tolist()]
             f.write(f'{winning}\n')
+        f.close()
+
+    with open("dataset_onehot_draw.csv", 'a+') as f:
+        for state, masks, winning in zip(mcts.states, mcts.masks, win):
+
+            player = state.flatten()
+            player = np.where(player == 1, 1, 0)
+            opponent = state.flatten()
+            opponent = np.where(opponent == -1, 1, 0)
+            [f.write(f'{sign},') for sign in player.tolist()]
+            [f.write(f'{sign},') for sign in opponent.tolist()]
+            [f.write(f'{sign},') for sign in np.array(masks).flatten().tolist()]
+            [f.write(f'{sign},') for sign in quality.flatten().tolist()]
+            f.write(f'{winning}\n')
+        f.close()
