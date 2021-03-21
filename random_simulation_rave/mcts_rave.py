@@ -504,8 +504,8 @@ def print_best_move(last_move, sign):
 
 		masks.append(create_mask(moves))
 		signs.append(sign)
-		states.append(np.stack([convert_game_into_nparray(gameT, sign), create_mask(moves)], axis=-1))
-		qualities.append(mcts_get_qualities(moves).flatten())
+		states.append(convert_game_into_nparray(gameT, sign))
+		qualities.append(mcts_get_qualities(moves))
 
 		apply_move(game, mini_game, best_move, sign)
 		# reset_state()

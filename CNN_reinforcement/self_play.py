@@ -1,8 +1,13 @@
 from CNN_connector import *
 
+import sys
+sys.path.append("templates")
+
+from OneHot import OneHot
+
 import mcts_rave_CNN as mcts
 from mcts_rave_CNN import *
-import matplotlib.pyplot as plt
+# import matplotlib.pyplot as plt
 
 mcts_iter = 600
 n_game = 1
@@ -16,17 +21,17 @@ def play_game(model):
 
     # Optimization for turn 1
     sign = 'X'
-    last_move = (4, 4)
-    apply_move(mcts.game, mcts.mini_game, last_move, sign)
-    print(f"'{sign}' apply {last_move}")
+    last_move = (-1, -1)
+    # apply_move(mcts.game, mcts.mini_game, last_move, sign)
+    # print(f"'{sign}' apply {last_move}")
 
-    sign = 'O'
-    i = 0
-    for k in range(mcts_iter):
-        reset_state()
-        MCTS(last_move, sign=sign, model=model)
-        i += 1
-    print(f"MCTS iter {i}", file=sys.stderr, flush=True)
+    # sign = 'O'
+    # i = 0
+    # for k in range(mcts_iter):
+    #     reset_state()
+    #     MCTS(last_move, sign=sign, model=model)
+    #     i += 1
+    # print(f"MCTS iter {i}", file=sys.stderr, flush=True)
 
     print_board(mcts.game, mcts.mini_game)
 
@@ -63,8 +68,9 @@ def play_game(model):
         # turn_time = 0.095
 
 
-model = RLModel(name='model_night_0')
+model = OneHot('one_hot')
 
+i = 0
 # for k in range(1, n_game + 1):
 while True:
 
@@ -73,33 +79,44 @@ while True:
     # cross_win = play_game(None)
 
     # First player = X but first states/qualities save is O
-    win = [-cross_win if i % 2 == 0 else cross_win for i in range(len(mcts.states))]
+    win = [-cross_win if i % 2 == 0 else cross_win for i in range(len(mcts.signs))]
 
     # print(f"END GAME {k}/{n_game}")
-    print(np.array(mcts.states).shape)
-    print(np.array(mcts.qualities).shape)
-    print(mcts.signs)
-    print(np.array(win).shape)
-    print(f"cross_win at 0: {win}")
-    print(f"Feature -1: {mcts.states[-1]}")
+    # print(np.array(mcts.states).shape)
+    # print(np.array(mcts.qualities).shape)
+    # print(mcts.signs)
+    # print(np.array(win).shape)
+    # print(f"cross_win at 0: {win}")
+    # print(f"Feature -1: {mcts.states[-1]}")
 
     # win = np.array(win)
 
     if cross_win:
-        history = model.fit(np.array(mcts.states), [np.array(mcts.qualities), np.array(win)])
 
-        with open("dataset_night_0.mcts_rave_CNN", 'a') as f:
-            for state, quality, winning in zip(mcts.states, mcts.qualities, win):
+        features = np.stack([mcts.features_0, mcts.features_1, mcts.features_2], axis=-1)
+
+        history = model.fit(features, [np.array(mcts.qualities), np.array(win)])
+
+        with open("dataset_reinforcement_0.csv", 'a+') as f:
+
+            print(f"features 0 {len(mcts.features_0)}")
+            print(f"features 1 {len(mcts.features_1)}")
+            print(f"features 2 {len(mcts.features_2)}")
+            print(f"quality {len(mcts.qualities)}")
+            print(f"win {len(win)}")
+            for feature_0, feature_1, feature_2, quality, winning in zip(mcts.features_0, mcts.features_1, mcts.features_2, mcts.qualities, win):
                 # [[f.write(f"{sign},") for sign in row] for row in state]
                 # [[f.write(f"{sign},") for sign in row] for row in quality]
-                # print(f"state {type(state)}: {state}")
                 # print(f"quality {type(quality)}: {quality}")
-                [f.write(f"{sign},") for sign in state.flatten().tolist()]
+                [f.write(f"{sign},") for sign in feature_0.flatten().tolist()]
+                [f.write(f"{sign},") for sign in feature_1.flatten().tolist()]
+                [f.write(f"{sign},") for sign in feature_2.flatten().tolist()]
                 [f.write(f"{sign},") for sign in quality.flatten().tolist()]
                 f.write(f'{winning}\n')
             f.close()
 
-        model.model.save(model.name)
+        model.model.save(f"models/one_hot/20_03_20/model_n_{i}")
+        i += 1
 
 # print([k for k, _ in history.history.items()])
 # loss_curve = history.history["loss"]

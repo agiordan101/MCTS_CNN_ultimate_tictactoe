@@ -39,6 +39,10 @@ signs = []
 states = []
 qualities = []
 
+features_0 = []
+features_1 = []
+features_2 = []
+
 all_yxs = []
 for y in range(9):
 	for x in range(9):
@@ -46,9 +50,6 @@ for y in range(9):
 
 begin_time = 0
 
-stat_1 = 0
-stat_2 = 0
-stat_3 = 0
 
 # --- DEBUG ---
 def print_board(board, mini_board):
@@ -98,6 +99,7 @@ def get_moves_id(stateT, last_move, mcts=False):
 
 	if last_move[0] != -1:
 
+		# Fetch next grid id
 		y_next_grid, x_next_grid = get_next_grid(last_move)
 		next_grid = (y_next_grid, x_next_grid)
 
@@ -370,7 +372,11 @@ def MCTS(last_move, sign, model, depth=0):
 			# print(f"mask {mask.shape}")
 			# print(f"game_np {game_np.shape}")
 
-			features = np.stack([game_np, mask], axis=-1)
+			features = np.stack([
+
+				np.where(game_np == 1, 1, 0),
+        		np.where(game_np == -1, 1, 0),
+				mask], axis=-1)
 			# print(f"features {features.shape}")
 
 			policy, win = model.predict(features[np.newaxis, :, :, :])
@@ -481,8 +487,12 @@ def print_best_move(last_move, sign):
 		print(f"{best_move[0]} {best_move[1]}")
 		print(f"'{sign}' apply {best_move}", file=sys.stderr, flush=True)
 
+		game_np = convert_game_into_nparray(gameT, sign)
+		features_0.append(np.where(game_np == 1, 1, 0))
+		features_1.append(np.where(game_np == -1, 1, 0))
+		features_2.append(create_mask(moves))
+
 		signs.append(sign)
-		states.append(np.stack([convert_game_into_nparray(gameT, sign), create_mask(moves)], axis=-1))
 		qualities.append(mcts_get_qualities(moves).flatten())
 		# print(type(qualities), type(qualities[-1]))
 		# quit()
@@ -565,9 +575,15 @@ def init_mcts():
 	global signs
 	global states
 	global qualities
+	global features_0
+	global features_1
+	global features_2
 	signs = []
 	states = []
 	qualities = []
+	features_0 = []
+	features_1 = []
+	features_2 = []
 
 	global game
 	global mini_game
